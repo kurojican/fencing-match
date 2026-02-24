@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フェンシング チームマッチ</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --panel: #12151c;
+    --panel2: #1a1e28;
+    --border: #2a3045;
+    --accent: #e8c840;
+    --accent2: #4a9eff;
+    --text: #e8eaf0;
+    --muted: #6b7290;
+    --red: #ff4a6a;
+    --green: #3de87a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; min-height: 100vh;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(74,158,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,158,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV TABS ── */
+  .tabs {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    display: flex; gap: 0;
+  }
+
+  .tab-btn {
+    font-family: 'Oswald', sans-serif; font-size: 12px;
+    letter-spacing: 3px; text-transform: uppercase;
+    padding: 16px 28px; background: none; border: none;
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-page { display: none; }
+  .tab-page.active { display: block; }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1000px; margin: 0 auto; padding: 24px 20px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center; margin-bottom: 32px;
+    padding: 28px 0 20px; border-bottom: 1px solid var(--border); position: relative;
+  }
+
+  header::after {
+    content: ''; position: absolute; bottom: -1px; left: 50%;
+    transform: translateX(-50%); width: 120px; height: 2px; background: var(--accent);
+  }
+
+  .title-en {
+    font-family: 'Oswald', sans-serif; font-size: 11px;
+    letter-spacing: 6px; color: var(--accent); text-transform: uppercase; margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Oswald', sans-serif; font-size: clamp(24px, 4vw, 42px);
+    font-weight: 700; letter-spacing: 2px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .subtitle { margin-top: 6px; font-size: 12px; color: var(--muted); letter-spacing: 1px; }
+
+  /* ── SECTION ── */
+  .section {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 4px; padding: 22px; margin-bottom: 18px;
+    position: relative; overflow: hidden;
+  }
+
+  .section::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%; background: var(--accent);
+  }
+
+  .section-title {
+    font-family: 'Oswald', sans-serif; font-size: 12px;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+  }
+
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── FORM ── */
+  .settings-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 14px;
+  }
+
+  .field-group label {
+    display: block; font-size: 10px; letter-spacing: 2px;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 5px;
+  }
+
+  .field-group input, .field-group select {
+    width: 100%; background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 9px 13px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+  }
+
+  .field-group input:focus, .field-group select:focus { border-color: var(--accent2); }
+  .field-group select option { background: var(--panel2); }
+
+  .teams-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 580px) { .teams-grid { grid-template-columns: 1fr; } }
+
+  .team-panel {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 16px;
+  }
+
+  .team-panel h3 {
+    font-family: 'Oswald', sans-serif; font-size: 14px;
+    letter-spacing: 2px; margin-bottom: 12px; padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .team-a h3 { color: var(--accent); }
+  .team-b h3 { color: var(--accent2); }
+
+  .player-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+
+  .player-num {
+    font-family: 'Oswald', sans-serif; font-size: 12px;
+    color: var(--muted); width: 16px; text-align: center; flex-shrink: 0;
+  }
+
+  .player-row input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 3px; padding: 7px 11px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 13px;
+    outline: none; transition: border-color 0.2s;
+  }
+
+  .player-row input:focus { border-color: var(--accent2); }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+
+  .btn {
+    font-family: 'Oswald', sans-serif; font-size: 12px;
+    letter-spacing: 3px; text-transform: uppercase;
+    padding: 11px 28px; border: none; border-radius: 3px;
+    cursor: pointer; transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--accent); color: #0a0c10; font-weight: 700; }
+  .btn-primary:hover { background: #f5d840; transform: translateY(-1px); box-shadow: 0 5px 18px rgba(232,200,64,0.3); }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--muted); background: var(--panel2); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(255,74,106,0.3); }
+  .btn-danger:hover { background: rgba(255,74,106,0.08); }
+  .btn-green { background: transparent; color: var(--green); border: 1px solid rgba(61,232,122,0.3); }
+  .btn-green:hover { background: rgba(61,232,122,0.08); }
+
+  /* ── MATCH TABLE ── */
+  .match-table-wrap { overflow-x: auto; }
+
+  .match-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  .match-table th {
+    font-family: 'Oswald', sans-serif; font-size: 10px;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+    padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .match-table td {
+    padding: 10px 12px; border-bottom: 1px solid rgba(42,48,69,0.5);
+    vertical-align: middle;
+  }
+
+  .bout-row:hover td { background: rgba(255,255,255,0.02); }
+  .bout-num-cell { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700; color: var(--border); width: 32px; text-align: center; }
+  .player-name-a { font-weight: 700; color: var(--accent); font-size: 14px; }
+  .player-name-b { font-weight: 700; color: var(--accent2); font-size: 14px; }
+  .vs-cell { font-family: 'Oswald', sans-serif; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-align: center; width: 28px; }
+
+  .score-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
+  .score-input {
+    width: 54px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 3px; padding: 5px 4px; color: var(--text);
+    font-family: 'Oswald', sans-serif; font-size: 17px;
+    text-align: center; outline: none; transition: border-color 0.2s;
+  }
+
+  .score-input:focus { border-color: var(--accent2); }
+
+  .limit-label { font-family: 'Oswald', sans-serif; font-size: 9px; color: var(--muted); letter-spacing: 1px; white-space: nowrap; }
+  .limit-label.leading  { color: rgba(107,114,144,0.4); }
+  .limit-label.trailing { color: var(--accent); font-weight: 700; }
+
+  .running-score { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 700; display: block; text-align: center; }
+  .running-score.a { color: var(--accent); }
+  .running-score.b { color: var(--accent2); }
+
+  /* ── SUMMARY BAR ── */
+  .summary-bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px; background: var(--panel2);
+    border: 1px solid var(--border); border-radius: 3px;
+    margin-top: 18px; flex-wrap: wrap;
+  }
+
+  .summary-label { font-family: 'Oswald', sans-serif; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .total-display { font-family: 'Oswald', sans-serif; font-size: 40px; font-weight: 700; line-height: 1; }
+  .total-a { color: var(--accent); } .total-b { color: var(--accent2); }
+  .total-sep { font-family: 'Oswald', sans-serif; font-size: 26px; color: var(--muted); }
+
+  .progress-wrap { flex: 1; min-width: 80px; height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; display: flex; }
+  .progress-a { height: 100%; background: var(--accent); transition: width 0.35s ease; }
+  .progress-b { height: 100%; background: var(--accent2); transition: width 0.35s ease; }
+
+  .winner-badge { margin-left: auto; font-family: 'Oswald', sans-serif; font-size: 13px; letter-spacing: 2px; padding: 7px 18px; border-radius: 3px; text-transform: uppercase; display: none; }
+  .winner-a { background: rgba(232,200,64,0.15); color: var(--accent); border: 1px solid var(--accent); }
+  .winner-b { background: rgba(74,158,255,0.1); color: var(--accent2); border: 1px solid var(--accent2); }
+  .winner-draw { background: rgba(107,114,144,0.15); color: var(--muted); border: 1px solid var(--muted); }
+
+  /* ── SAVE BUTTON AREA ── */
+  .save-bar {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 14px 18px; background: rgba(61,232,122,0.05);
+    border: 1px solid rgba(61,232,122,0.2); border-radius: 3px; margin-top: 14px;
+  }
+
+  .save-bar p { font-size: 12px; color: var(--muted); flex: 1; }
+
+  /* ── HISTORY LIST ── */
+  .history-empty {
+    text-align: center; padding: 60px 20px;
+    font-family: 'Oswald', sans-serif; font-size: 14px;
+    letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
+  }
+
+  .history-card {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 18px 20px; margin-bottom: 12px;
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    transition: border-color 0.2s; cursor: pointer;
+  }
+
+  .history-card:hover { border-color: var(--muted); }
+
+  .hcard-num {
+    font-family: 'Oswald', sans-serif; font-size: 28px;
+    font-weight: 700; color: var(--border); min-width: 36px; text-align: center;
+  }
+
+  .hcard-info { flex: 1; min-width: 160px; }
+
+  .hcard-teams {
+    font-family: 'Oswald', sans-serif; font-size: 16px;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+
+  .hcard-a { color: var(--accent); }
+  .hcard-b { color: var(--accent2); }
+  .hcard-sep { color: var(--muted); font-size: 12px; }
+
+  .hcard-meta { font-size: 11px; color: var(--muted); }
+
+  .hcard-score {
+    font-family: 'Oswald', sans-serif; font-size: 32px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px; min-width: 120px; justify-content: center;
+  }
+
+  .hcard-winner-badge {
+    font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 2px;
+    padding: 5px 12px; border-radius: 3px; text-transform: uppercase;
+  }
+
+  .hcard-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn-small {
+    font-family: 'Oswald', sans-serif; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 7px 14px; border: none; border-radius: 3px;
+    cursor: pointer; transition: all 0.2s;
+  }
+
+  .btn-small.view { background: rgba(74,158,255,0.1); color: var(--accent2); border: 1px solid rgba(74,158,255,0.3); }
+  .btn-small.view:hover { background: rgba(74,158,255,0.2); }
+  .btn-small.qr { background: rgba(232,200,64,0.1); color: var(--accent); border: 1px solid rgba(232,200,64,0.3); }
+  .btn-small.qr:hover { background: rgba(232,200,64,0.2); }
+  .btn-small.del { background: rgba(255,74,106,0.08); color: var(--red); border: 1px solid rgba(255,74,106,0.2); }
+  .btn-small.del:hover { background: rgba(255,74,106,0.15); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 28px; max-width: 480px; width: 100%;
+    position: relative; animation: modalIn 0.25s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-close {
+    position: absolute; top: 14px; right: 16px;
+    font-family: 'Oswald', sans-serif; font-size: 18px; color: var(--muted);
+    background: none; border: none; cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  .modal-title {
+    font-family: 'Oswald', sans-serif; font-size: 14px;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 20px;
+  }
+
+  #qrCanvas { display: flex; justify-content: center; margin: 16px 0; }
+  #qrCanvas canvas, #qrCanvas img { border-radius: 4px; }
+
+  .qr-hint {
+    font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; margin-top: 10px;
+  }
+
+  .qr-url {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 8px 12px; margin-top: 10px;
+    font-size: 11px; color: var(--muted); word-break: break-all;
+    display: flex; gap: 8px; align-items: center;
+  }
+
+  .qr-url span { flex: 1; }
+
+  .copy-btn {
+    font-family: 'Oswald', sans-serif; font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 4px 10px;
+    background: rgba(232,200,64,0.1); color: var(--accent);
+    border: 1px solid rgba(232,200,64,0.3); border-radius: 2px; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+  }
+
+  .copy-btn:hover { background: rgba(232,200,64,0.2); }
+
+  /* Detail modal */
+  .detail-score-row {
+    display: flex; align-items: center; gap: 20px; justify-content: center;
+    margin: 18px 0;
+  }
+
+  .detail-score {
+    font-family: 'Oswald', sans-serif; font-size: 52px; font-weight: 700; line-height: 1;
+  }
+
+  .detail-bouts {
+    font-size: 12px; color: var(--muted); margin-top: 10px;
+    border-top: 1px solid var(--border); padding-top: 12px;
+  }
+
+  .detail-bout-row {
+    display: flex; gap: 8px; align-items: center;
+    padding: 4px 0; border-bottom: 1px solid rgba(42,48,69,0.3); font-size: 12px;
+  }
+
+  .detail-bout-row:last-child { border-bottom: none; }
+
+  .info-grid { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 18px; }
+  .info-item label { display: block; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+  .info-item span { font-family: 'Oswald', sans-serif; font-size: 15px; color: var(--text); }
+
+  .sig-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 500px) { .sig-grid { grid-template-columns: 1fr; } }
+  .sig-box label { display: block; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 7px; }
+  .sig-line { border-bottom: 1px solid var(--border); height: 40px; }
+  .sig-name { font-family: 'Oswald', sans-serif; font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .rule-box {
+    background: rgba(232,200,64,0.05); border: 1px solid rgba(232,200,64,0.15);
+    border-radius: 3px; padding: 10px 14px; margin-bottom: 16px;
+    font-size: 11px; color: var(--muted); line-height: 1.7;
+  }
+
+  .rule-box strong { color: var(--accent); }
+
+  #output { display: none; }
+
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* saved flash */
+  .saved-flash {
+    display: none; background: rgba(61,232,122,0.15);
+    border: 1px solid rgba(61,232,122,0.4); border-radius: 3px;
+    padding: 10px 16px; font-family: 'Oswald', sans-serif; font-size: 12px;
+    letter-spacing: 2px; color: var(--green); text-transform: uppercase;
+    text-align: center; margin-top: 10px;
+  }
+
+  @media print {
+    .tabs, .no-print { display: none !important; }
+    body { background: white; color: black; }
+    body::before { display: none; }
+    .section { border-color: #ccc; background: white; }
+    .section::before { background: #444; }
+    .match-table th, .match-table td { color: #222; border-color: #ddd; }
+    .bout-num-cell { color: #bbb; }
+    .player-name-a { color: #b8900a; }
+    .player-name-b { color: #1a5fb4; }
+    .score-input { background: white; color: black; border-color: #aaa; }
+    .running-score.a { color: #b8900a; } .running-score.b { color: #1a5fb4; }
+    .total-a { color: #b8900a; } .total-b { color: #1a5fb4; }
+    .summary-bar { background: #f5f5f5; border-color: #ccc; }
+    h1 { -webkit-text-fill-color: black; background: none; color: black; }
+    .rule-box { display: none; }
+    .save-bar { display: none; }
+    #output { display: block !important; }
+    .tab-page { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TABS -->
+<nav class="tabs no-print">
+  <button class="tab-btn active" onclick="switchTab('new')">＋ 新規試合</button>
+  <button class="tab-btn" onclick="switchTab('history')">📋 試合履歴</button>
+</nav>
+
+<!-- ===== TAB: 新規試合 ===== -->
+<div id="tab-new" class="tab-page active">
+<div class="container">
+
+  <header>
+    <div class="title-en">Fencing Team Match</div>
+    <h1>チームマッチ 組合せ作成</h1>
+    <p class="subtitle">3選手 × 各3試合 ＝ 全9試合 ／ 先取45点</p>
+  </header>
+
+  <div class="section no-print">
+    <div class="section-title">基本設定</div>
+    <div class="settings-row">
+      <div class="field-group"><label>イベント名</label><input type="text" id="eventName" placeholder="〇〇大会 第X回戦"></div>
+      <div class="field-group">
+        <label>種目</label>
+        <select id="weapon">
+          <option value="F">フルーレ (F)</option>
+          <option value="E">エペ (E)</option>
+          <option value="S">サーブル (S)</option>
+        </select>
+      </div>
+      <div class="field-group"><label>日付</label><input type="date" id="matchDate"></div>
+      <div class="field-group"><label>ラウンド</label><input type="text" id="round" placeholder="例: 決勝"></div>
+      <div class="field-group"><label>審判名</label><input type="text" id="refereeName" placeholder="審判氏名"></div>
+    </div>
+  </div>
+
+  <div class="section no-print">
+    <div class="section-title">選手登録（各チーム3名）</div>
+    <div class="teams-grid">
+      <div class="team-panel team-a">
+        <h3>⚔ チーム A</h3>
+        <div class="field-group" style="margin-bottom:12px"><label>チーム名</label><input type="text" id="teamAName" placeholder="チームA名"></div>
+        <div class="field-group" style="margin-bottom:12px"><label>監督名</label><input type="text" id="coachA" placeholder="監督氏名"></div>
+        <div class="player-row"><span class="player-num">1</span><input type="text" id="AP0" placeholder="選手1（キャプテン）"></div>
+        <div class="player-row"><span class="player-num">2</span><input type="text" id="AP1" placeholder="選手2"></div>
+        <div class="player-row"><span class="player-num">3</span><input type="text" id="AP2" placeholder="選手3"></div>
+      </div>
+      <div class="team-panel team-b">
+        <h3>⚔ チーム B</h3>
+        <div class="field-group" style="margin-bottom:12px"><label>チーム名</label><input type="text" id="teamBName" placeholder="チームB名"></div>
+        <div class="field-group" style="margin-bottom:12px"><label>監督名</label><input type="text" id="coachB" placeholder="監督氏名"></div>
+        <div class="player-row"><span class="player-num">1</span><input type="text" id="BP0" placeholder="選手1（キャプテン）"></div>
+        <div class="player-row"><span class="player-num">2</span><input type="text" id="BP1" placeholder="選手2"></div>
+        <div class="player-row"><span class="player-num">3</span><input type="text" id="BP2" placeholder="選手3"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row no-print">
+    <button class="btn btn-primary" onclick="generateMatchup()">▶ 組合せ生成</button>
+    <button class="btn btn-secondary" onclick="clearAll()">クリア</button>
+    <button class="btn btn-secondary" onclick="window.print()">🖨 印刷</button>
+  </div>
+
+  <!-- OUTPUT -->
+  <div id="output">
+
+    <div class="section">
+      <div class="section-title">対戦情報</div>
+      <div class="info-grid">
+        <div class="info-item"><label>イベント</label><span id="outEvent">—</span></div>
+        <div class="info-item"><label>種目</label><span id="outWeapon">—</span></div>
+        <div class="info-item"><label>日付</label><span id="outDate">—</span></div>
+        <div class="info-item"><label>ラウンド</label><span id="outRound">—</span></div>
+        <div class="info-item"><label>審判</label><span id="outReferee">—</span></div>
+      </div>
+      <div style="display:flex; gap:28px; align-items:center; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px;">Team A</div>
+          <div style="font-family:'Oswald',sans-serif; font-size:22px; color:var(--accent);" id="outTeamA">—</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:3px;">監督: <span id="outCoachA">—</span></div>
+        </div>
+        <div style="font-family:'Oswald',sans-serif; font-size:20px; color:var(--muted);">VS</div>
+        <div>
+          <div style="font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:3px;">Team B</div>
+          <div style="font-family:'Oswald',sans-serif; font-size:22px; color:var(--accent2);" id="outTeamB">—</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:3px;">監督: <span id="outCoachB">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">対戦組合せ ― 全9試合（先取45点）</div>
+      <div class="rule-box">
+        <strong>スコアルール：</strong>
+        <strong>勝っているチームの上限は5点</strong>。
+        負けているチームは累積目標点（試合番号×5）まで取得可能（例：3試合目でBが0点なら上限15点）。
+      </div>
+      <div class="match-table-wrap">
+        <table class="match-table" id="matchTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>チームA 選手</th>
+              <th></th>
+              <th>チームB 選手</th>
+              <th style="text-align:center">得点A<br><span style="font-size:8px">(上限)</span></th>
+              <th></th>
+              <th style="text-align:center">得点B<br><span style="font-size:8px">(上限)</span></th>
+              <th style="text-align:center">累計A</th>
+              <th></th>
+              <th style="text-align:center">累計B</th>
+            </tr>
+          </thead>
+          <tbody id="matchBody"></tbody>
+        </table>
+      </div>
+
+      <div class="summary-bar">
+        <div>
+          <div class="summary-label" id="labelA">Team A</div>
+          <div class="total-display total-a" id="totalA">0</div>
+        </div>
+        <div class="total-sep">—</div>
+        <div>
+          <div class="summary-label" id="labelB">Team B</div>
+          <div class="total-display total-b" id="totalB">0</div>
+        </div>
+        <div style="margin-left:4px">
+          <div class="summary-label">目標</div>
+          <div style="font-family:'Oswald',sans-serif; font-size:20px; color:var(--muted);">45</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-a" id="progressA" style="width:0%"></div>
+          <div class="progress-b" id="progressB" style="width:0%"></div>
+        </div>
+        <span class="winner-badge" id="winnerBadge"></span>
+      </div>
+    </div>
+
+    <!-- SAVE BAR -->
+    <div class="save-bar no-print">
+      <p>試合結果を履歴に保存しておけます。QRコードで他のデバイスと共有も可能です。</p>
+      <button class="btn btn-green" onclick="saveMatch()">💾 履歴に保存</button>
+      <button class="btn btn-secondary" onclick="showQRCurrent()">📱 QR共有</button>
+    </div>
+    <div class="saved-flash" id="savedFlash">✓ 保存しました</div>
+
+    <div class="section no-print">
+      <div class="section-title">署名欄</div>
+      <div class="sig-grid" style="grid-template-columns:1fr 1fr 1fr; gap:20px;">
+        <div class="sig-box">
+          <label>監督 A</label>
+          <div class="sig-line"></div>
+          <div class="sig-name" id="sigCoachA"></div>
+        </div>
+        <div class="sig-box">
+          <label>Signature — Referee（審判）</label>
+          <div class="sig-line"></div>
+          <div class="sig-name" id="sigReferee"></div>
+        </div>
+        <div class="sig-box">
+          <label>監督 B</label>
+          <div class="sig-line"></div>
+          <div class="sig-name" id="sigCoachB"></div>
+        </div>
+      </div>
+      <div class="sig-grid" style="grid-template-columns:1fr 1fr; gap:20px; margin-top:16px;">
+        <div class="sig-box">
+          <label>Signature — Captain A（キャプテン）</label>
+          <div class="sig-line"></div>
+          <div class="sig-name" id="sigA"></div>
+        </div>
+        <div class="sig-box">
+          <label>Signature — Captain B（キャプテン）</label>
+          <div class="sig-line"></div>
+          <div class="sig-name" id="sigB"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /output -->
+</div><!-- /container -->
+</div><!-- /tab-new -->
+
+
+<!-- ===== TAB: 履歴 ===== -->
+<div id="tab-history" class="tab-page">
+<div class="container">
+
+  <header>
+    <div class="title-en">Match History</div>
+    <h1>試合履歴</h1>
+    <p class="subtitle">保存した試合を確認・共有できます</p>
+  </header>
+
+  <div class="btn-row no-print" style="justify-content:flex-end; margin:0 0 16px;">
+    <button class="btn btn-danger" onclick="clearAllHistory()">🗑 履歴をすべて削除</button>
+  </div>
+
+  <div id="historyList"></div>
+
+</div>
+</div>
+
+
+<!-- ===== MODAL: QR ===== -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('qrModal')">✕</button>
+    <div class="modal-title">📱 QRコードで共有</div>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:4px;">スマホでQRコードを読み取ると、この対戦票をそのまま開けます。</p>
+    <div id="qrCanvas"></div>
+    <div class="qr-hint">※ 同じHTMLファイルを開いている端末同士でURLを共有します</div>
+    <div class="qr-url">
+      <span id="qrUrlText"></span>
+      <button class="copy-btn" onclick="copyQrUrl()">コピー</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: 詳細 ===== -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    <div class="modal-title" id="detailTitle">試合詳細</div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+
+<script>
+// ─── BOUT ORDER ─────────────────────────────────────────────────────────────
+const BOUTS = [
+  [1, 0, 1], [2, 1, 2], [3, 2, 0],
+  [4, 0, 0], [5, 1, 1], [6, 2, 2],
+  [7, 0, 2], [8, 1, 0], [9, 2, 1],
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let currentMatch = null; // currently displayed match data
+let qrInstance = null;
+
+// ─── TABS ────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'history') renderHistory();
+}
+
+// ─── GENERATE ───────────────────────────────────────────────────────────────
+function generateMatchup() {
+  const teamA = document.getElementById('teamAName').value.trim() || 'Team A';
+  const teamB = document.getElementById('teamBName').value.trim() || 'Team B';
+  const pA    = [0,1,2].map(i => document.getElementById(`AP${i}`).value.trim() || `A${i+1}`);
+  const pB    = [0,1,2].map(i => document.getElementById(`BP${i}`).value.trim() || `B${i+1}`);
+  const coachA   = document.getElementById('coachA').value.trim() || '';
+  const coachB   = document.getElementById('coachB').value.trim() || '';
+  const referee  = document.getElementById('refereeName').value.trim() || '';
+  const event  = document.getElementById('eventName').value.trim() || '';
+  const weapon = document.getElementById('weapon').value;
+  const date   = document.getElementById('matchDate').value || '';
+  const round  = document.getElementById('round').value.trim() || '';
+
+  currentMatch = { teamA, teamB, pA, pB, coachA, coachB, referee, event, weapon, date, round, scores: [] };
+
+  document.getElementById('outEvent').textContent  = event || '—';
+  document.getElementById('outWeapon').textContent = weapon;
+  document.getElementById('outDate').textContent   = date || '—';
+  document.getElementById('outRound').textContent  = round || '—';
+  document.getElementById('outReferee').textContent = referee || '—';
+  document.getElementById('outTeamA').textContent  = teamA;
+  document.getElementById('outTeamB').textContent  = teamB;
+  document.getElementById('outCoachA').textContent = coachA || '—';
+  document.getElementById('outCoachB').textContent = coachB || '—';
+  document.getElementById('labelA').textContent    = teamA;
+  document.getElementById('labelB').textContent    = teamB;
+  document.getElementById('sigA').textContent      = pA[0];
+  document.getElementById('sigB').textContent      = pB[0];
+  document.getElementById('sigCoachA').textContent = coachA;
+  document.getElementById('sigCoachB').textContent = coachB;
+  document.getElementById('sigReferee').textContent = referee;
+  document.getElementById('savedFlash').style.display = 'none';
+
+  const tbody = document.getElementById('matchBody');
+  tbody.innerHTML = '';
+
+  BOUTS.forEach(([num, ai, bi]) => {
+    const tr = document.createElement('tr');
+    tr.className = 'bout-row';
+    tr.innerHTML = `
+      <td class="bout-num-cell">${num}</td>
+      <td class="player-name-a">${pA[ai]}</td>
+      <td class="vs-cell">VS</td>
+      <td class="player-name-b">${pB[bi]}</td>
+      <td style="text-align:center">
+        <div class="score-wrap">
+          <input class="score-input" id="sa${num}" type="number" min="0" max="5" placeholder="—" oninput="onScoreInput()">
+          <span class="limit-label leading" id="lim_a${num}">上限 5</span>
+        </div>
+      </td>
+      <td class="vs-cell">—</td>
+      <td style="text-align:center">
+        <div class="score-wrap">
+          <input class="score-input" id="sb${num}" type="number" min="0" max="5" placeholder="—" oninput="onScoreInput()">
+          <span class="limit-label leading" id="lim_b${num}">上限 5</span>
+        </div>
+      </td>
+      <td style="text-align:center"><span class="running-score a" id="rsa${num}">—</span></td>
+      <td class="vs-cell">—</td>
+      <td style="text-align:center"><span class="running-score b" id="rsb${num}">—</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('output').style.display = 'block';
+  document.getElementById('output').classList.add('fade-in');
+  document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  onScoreInput();
+}
+
+// ─── SCORE INPUT ─────────────────────────────────────────────────────────────
+function onScoreInput() {
+  let cumA = 0, cumB = 0, anyEntered = false;
+
+  BOUTS.forEach(([num]) => {
+    const saEl = document.getElementById(`sa${num}`);
+    const sbEl = document.getElementById(`sb${num}`);
+    if (!saEl) return;
+
+    // Limits for this bout (based on scores BEFORE this bout)
+    updateLimitsForBout(num, cumA, cumB);
+
+    const va = saEl.value !== '' ? Math.min(parseInt(saEl.value)||0, parseInt(saEl.max)||5) : null;
+    const vb = sbEl.value !== '' ? Math.min(parseInt(sbEl.value)||0, parseInt(sbEl.max)||5) : null;
+
+    if (va !== null) { cumA += va; anyEntered = true; }
+    if (vb !== null) { cumB += vb; anyEntered = true; }
+
+    const rsaEl = document.getElementById(`rsa${num}`);
+    const rsbEl = document.getElementById(`rsb${num}`);
+    if (rsaEl) rsaEl.textContent = anyEntered ? cumA : '—';
+    if (rsbEl) rsbEl.textContent = anyEntered ? cumB : '—';
+  });
+
+  document.getElementById('totalA').textContent = cumA;
+  document.getElementById('totalB').textContent = cumB;
+
+  document.getElementById('progressA').style.width = Math.min(Math.round((cumA/45)*100), 100) + '%';
+  document.getElementById('progressB').style.width = Math.min(Math.round((cumB/45)*100), 100) + '%';
+
+  const badge = document.getElementById('winnerBadge');
+  const nameA = document.getElementById('outTeamA').textContent;
+  const nameB = document.getElementById('outTeamB').textContent;
+
+  if (anyEntered) {
+    badge.style.display = 'block';
+    if      (cumA >= 45)      { badge.textContent = nameA + '  WIN';     badge.className = 'winner-badge winner-a'; }
+    else if (cumB >= 45)      { badge.textContent = nameB + '  WIN';     badge.className = 'winner-badge winner-b'; }
+    else if (cumA > cumB)     { badge.textContent = nameA + ' LEADING';  badge.className = 'winner-badge winner-a'; }
+    else if (cumB > cumA)     { badge.textContent = nameB + ' LEADING';  badge.className = 'winner-badge winner-b'; }
+    else                      { badge.textContent = 'EVEN';              badge.className = 'winner-badge winner-draw'; }
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Store scores in currentMatch
+  if (currentMatch) {
+    currentMatch.scores = BOUTS.map(([num]) => {
+      const a = document.getElementById(`sa${num}`);
+      const b = document.getElementById(`sb${num}`);
+      return {
+        a: a && a.value !== '' ? parseInt(a.value)||0 : null,
+        b: b && b.value !== '' ? parseInt(b.value)||0 : null
+      };
+    });
+    currentMatch.totalA = cumA;
+    currentMatch.totalB = cumB;
+  }
+}
+
+function updateLimitsForBout(boutNum, prevCumA, prevCumB) {
+  const target = boutNum * 5;
+  let limA, limB;
+
+  if (prevCumA >= prevCumB) {
+    limA = 5;
+    limB = Math.max(0, target - prevCumB);
+  } else {
+    limB = 5;
+    limA = Math.max(0, target - prevCumA);
+  }
+
+  const limAEl = document.getElementById(`lim_a${boutNum}`);
+  const limBEl = document.getElementById(`lim_b${boutNum}`);
+  const saEl   = document.getElementById(`sa${boutNum}`);
+  const sbEl   = document.getElementById(`sb${boutNum}`);
+
+  if (limAEl) { limAEl.textContent = `上限 ${limA}`; limAEl.className = 'limit-label ' + (limA === 5 ? 'leading' : 'trailing'); }
+  if (limBEl) { limBEl.textContent = `上限 ${limB}`; limBEl.className = 'limit-label ' + (limB === 5 ? 'leading' : 'trailing'); }
+  if (saEl)   { saEl.max = limA; if (saEl.value !== '' && parseInt(saEl.value) > limA) saEl.value = limA; }
+  if (sbEl)   { sbEl.max = limB; if (sbEl.value !== '' && parseInt(sbEl.value) > limB) sbEl.value = limB; }
+}
+
+// ─── SAVE ────────────────────────────────────────────────────────────────────
+function saveMatch() {
+  if (!currentMatch) return;
+  const history = getHistory();
+  const entry = {
+    ...currentMatch,
+    id: Date.now(),
+    savedAt: new Date().toISOString()
+  };
+  history.unshift(entry);
+  localStorage.setItem('fencing_matches', JSON.stringify(history));
+
+  const flash = document.getElementById('savedFlash');
+  flash.style.display = 'block';
+  setTimeout(() => flash.style.display = 'none', 2500);
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('fencing_matches')) || []; }
+  catch { return []; }
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const history = getHistory();
+  const el = document.getElementById('historyList');
+  el.innerHTML = '';
+
+  if (history.length === 0) {
+    el.innerHTML = '<div class="history-empty">保存された試合はありません</div>';
+    return;
+  }
+
+  history.forEach((m, idx) => {
+    const card = document.createElement('div');
+    card.className = 'history-card';
+
+    const tA = m.totalA ?? 0;
+    const tB = m.totalB ?? 0;
+    let winnerClass = 'winner-draw';
+    let winnerText  = 'EVEN';
+    if (tA > tB) { winnerClass = 'winner-a'; winnerText = m.teamA + ' WIN'; }
+    if (tB > tA) { winnerClass = 'winner-b'; winnerText = m.teamB + ' WIN'; }
+
+    const meta = [m.event, m.weapon, m.date, m.round, m.referee ? '審判: '+m.referee : ''].filter(Boolean).join(' ／ ');
+    const savedDate = m.savedAt ? new Date(m.savedAt).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+
+    card.innerHTML = `
+      <div class="hcard-num">${history.length - idx}</div>
+      <div class="hcard-info">
+        <div class="hcard-teams">
+          <span class="hcard-a">${m.teamA}</span>
+          <span class="hcard-sep">VS</span>
+          <span class="hcard-b">${m.teamB}</span>
+        </div>
+        <div class="hcard-meta">${meta}${savedDate ? ' ／ 保存: ' + savedDate : ''}</div>
+      </div>
+      <div class="hcard-score">
+        <span class="total-a">${tA}</span>
+        <span style="font-family:'Oswald',sans-serif;font-size:20px;color:var(--muted)">—</span>
+        <span class="total-b">${tB}</span>
+      </div>
+      <span class="hcard-winner-badge ${winnerClass}">${winnerText}</span>
+      <div class="hcard-actions">
+        <button class="btn-small view" onclick="showDetail(${idx})">詳細</button>
+        <button class="btn-small qr"   onclick="showQRHistory(${idx})">QR</button>
+        <button class="btn-small del"  onclick="deleteMatch(${idx})">削除</button>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function deleteMatch(idx) {
+  const h = getHistory();
+  h.splice(idx, 1);
+  localStorage.setItem('fencing_matches', JSON.stringify(h));
+  renderHistory();
+}
+
+function clearAllHistory() {
+  if (confirm('すべての履歴を削除しますか？')) {
+    localStorage.removeItem('fencing_matches');
+    renderHistory();
+  }
+}
+
+// ─── DETAIL MODAL ─────────────────────────────────────────────────────────────
+function showDetail(idx) {
+  const m = getHistory()[idx];
+  if (!m) return;
+
+  document.getElementById('detailTitle').textContent = `${m.teamA}  VS  ${m.teamB}`;
+
+  const tA = m.totalA ?? 0, tB = m.totalB ?? 0;
+  let winText = 'EVEN', winClass = 'winner-draw';
+  if (tA > tB) { winText = m.teamA + ' WIN'; winClass = 'winner-a'; }
+  if (tB > tA) { winText = m.teamB + ' WIN'; winClass = 'winner-b'; }
+
+  const boutRows = (m.scores || []).map((s, i) => {
+    const [num, ai, bi] = BOUTS[i];
+    const va = s.a ?? '—', vb = s.b ?? '—';
+    return `<div class="detail-bout-row">
+      <span style="font-family:'Oswald';font-size:13px;color:var(--muted);width:20px;">${num}</span>
+      <span style="flex:1;color:var(--accent);font-size:12px;">${(m.pA||[])[ai]||'—'}</span>
+      <span style="font-family:'Oswald';font-size:13px;color:var(--accent);">${va}</span>
+      <span style="font-family:'Oswald';font-size:11px;color:var(--muted);padding:0 6px;">—</span>
+      <span style="font-family:'Oswald';font-size:13px;color:var(--accent2);">${vb}</span>
+      <span style="flex:1;color:var(--accent2);font-size:12px;text-align:right;">${(m.pB||[])[bi]||'—'}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detailContent').innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">
+      ${[m.event, m.weapon, m.date, m.round, m.referee ? '審判: '+m.referee : ''].filter(Boolean).join(' ／ ')}
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:10px;">
+      ${m.coachA ? `<div style="font-size:11px;color:var(--muted);">監督A: <span style="color:var(--accent)">${m.coachA}</span></div>` : ''}
+      ${m.coachB ? `<div style="font-size:11px;color:var(--muted);">監督B: <span style="color:var(--accent2)">${m.coachB}</span></div>` : ''}
+    </div>
+    <div class="detail-score-row">
+      <div><div style="font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:4px;">${m.teamA}</div>
+        <div class="detail-score total-a">${tA}</div></div>
+      <div style="font-family:'Oswald';font-size:28px;color:var(--muted);">—</div>
+      <div><div style="font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:4px;">${m.teamB}</div>
+        <div class="detail-score total-b">${tB}</div></div>
+      <span class="winner-badge ${winClass}" style="display:block;margin-left:10px;">${winText}</span>
+    </div>
+    <div class="detail-bouts">${boutRows}</div>
+  `;
+
+  openModal('detailModal');
+}
+
+// ─── QR ──────────────────────────────────────────────────────────────────────
+function buildMatchUrl(matchData) {
+  // Encode match data into URL hash for sharing
+  const payload = btoa(encodeURIComponent(JSON.stringify(matchData)));
+  const base = window.location.href.split('#')[0].split('?')[0];
+  return `${base}?m=${payload}`;
+}
+
+function showQRCurrent() {
+  if (!currentMatch) return;
+  showQRForData(currentMatch);
+}
+
+function showQRHistory(idx) {
+  const m = getHistory()[idx];
+  if (!m) return;
+  showQRForData(m);
+}
+
+function showQRForData(data) {
+  const url = buildMatchUrl(data);
+  document.getElementById('qrUrlText').textContent = url.length > 200 ? url.substring(0,200)+'…' : url;
+
+  const canvas = document.getElementById('qrCanvas');
+  canvas.innerHTML = '';
+
+  try {
+    new QRCode(canvas, {
+      text: url,
+      width: 220,
+      height: 220,
+      colorDark: '#e8eaf0',
+      colorLight: '#12151c',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    canvas.innerHTML = '<p style="color:var(--muted);font-size:12px;text-align:center;">URLをコピーして共有してください</p>';
+  }
+
+  openModal('qrModal');
+}
+
+function copyQrUrl() {
+  const text = document.getElementById('qrUrlText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✓ コピー済';
+    setTimeout(() => btn.textContent = 'コピー', 2000);
+  });
+}
+
+// ─── MODAL UTILS ─────────────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+});
+
+// ─── LOAD FROM URL ────────────────────────────────────────────────────────────
+function loadFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const m = params.get('m');
+  if (!m) return;
+  try {
+    const data = JSON.parse(decodeURIComponent(atob(m)));
+
+    // Fill form fields
+    document.getElementById('teamAName').value = data.teamA || '';
+    document.getElementById('teamBName').value = data.teamB || '';
+    document.getElementById('eventName').value = data.event || '';
+    document.getElementById('weapon').value    = data.weapon || 'F';
+    document.getElementById('matchDate').value = data.date || '';
+    document.getElementById('round').value     = data.round || '';
+    document.getElementById('coachA').value    = data.coachA || '';
+    document.getElementById('coachB').value    = data.coachB || '';
+    document.getElementById('refereeName').value = data.referee || '';
+    if (data.pA) data.pA.forEach((v,i) => { const el = document.getElementById(`AP${i}`); if(el) el.value = v; });
+    if (data.pB) data.pB.forEach((v,i) => { const el = document.getElementById(`BP${i}`); if(el) el.value = v; });
+
+    generateMatchup();
+
+    // Fill scores
+    if (data.scores) {
+      data.scores.forEach((s, i) => {
+        const num = i + 1;
+        const saEl = document.getElementById(`sa${num}`);
+        const sbEl = document.getElementById(`sb${num}`);
+        if (saEl && s.a !== null && s.a !== undefined) saEl.value = s.a;
+        if (sbEl && s.b !== null && s.b !== undefined) sbEl.value = s.b;
+      });
+      onScoreInput();
+    }
+
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+  } catch(e) {
+    console.warn('URLからの読み込みに失敗しました', e);
+  }
+}
+
+// ─── MISC ─────────────────────────────────────────────────────────────────────
+function clearAll() {
+  ['teamAName','teamBName','eventName','round','coachA','coachB','refereeName'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('matchDate').value = new Date().toISOString().split('T')[0];
+  for (let i = 0; i < 3; i++) {
+    document.getElementById(`AP${i}`).value = '';
+    document.getElementById(`BP${i}`).value = '';
+  }
+  document.getElementById('output').style.display = 'none';
+  currentMatch = null;
+}
+
+window.onload = () => {
+  document.getElementById('matchDate').value = new Date().toISOString().split('T')[0];
+  loadFromUrl();
+};
+</script>
+</body>
+</html>
